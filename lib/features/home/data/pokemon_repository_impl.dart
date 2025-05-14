@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import '../domain/pokemon_entity.dart';
 import '../domain/pokemon_repository.dart';
@@ -11,9 +12,10 @@ class PokemonRepositoryImpl implements PokemonRepository {
   PokemonRepositoryImpl(this.client);
 
   @override
-  Future<List<PokemonEntity>> getPokemons() async {
-    final response = await client
-        .get(Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=100'));
+  Future<List<PokemonEntity>> getPokemons({int offset = 0, int limit = 6}) async {
+    final response = await client.get(
+      Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=$limit&offset=$offset'),
+    );
 
     if (response.statusCode != 200) {
       throw Exception('Failed to load pokemons');
@@ -22,38 +24,54 @@ class PokemonRepositoryImpl implements PokemonRepository {
     final data = json.decode(response.body);
     final results = data['results'] as List;
 
-    // Obtener los detalles completos para cada Pokémon
-    final enrichedResults = await Future.wait(results.map((e) async {
-      final pokemonData = await client
-          .get(Uri.parse('https://pokeapi.co/api/v2/pokemon/${e['name']}'));
+    final enrichedResults = await Future.wait(
+      results.map((e) async {
+        try {
+          final pokemonRes = await client.get(
+            Uri.parse('https://pokeapi.co/api/v2/pokemon/${e['name']}'),
+          );
 
-      if (pokemonData.statusCode != 200) {
-        throw Exception('Failed to load pokemon details for ${e['name']}');
-      }
+          if (pokemonRes.statusCode != 200) return null;
 
-      final pokemon = json.decode(pokemonData.body);
+          final pokemon = json.decode(pokemonRes.body);
 
-      final speciesData = await client
-          .get(Uri.parse('https://pokeapi.co/api/v2/pokemon-species/${pokemon['id']}'));
+          final speciesUrl = pokemon['species']['url'];
+          final speciesRes = await client.get(Uri.parse(speciesUrl));
 
-      if (speciesData.statusCode != 200) {
-        throw Exception('Failed to load species data for ${e['name']}');
-      }
+          if (speciesRes.statusCode != 200) return null;
 
-      final species = json.decode(speciesData.body);
+          final species = json.decode(speciesRes.body);
 
-      return {
-        'number': '#${pokemon['id'].toString().padLeft(3, '0')}',
-        'name': pokemon['name'].toString().capitalize(),
-        'imageUrl': pokemon['sprites']['other']['official-artwork']
-            ['front_default'],
-        'types': (pokemon['types'] as List)
-            .map((type) => type['type']['name'].toString().capitalize())
-            .toList(),
-        'color': species['color']['name'], // aquí está el cambio importante
-      };
-    }));
+          final name = pokemon['name'];
+          final imageUrl = pokemon['sprites']['other']['official-artwork']['front_default'];
+          final color = species['color']['name'];
+          final types = (pokemon['types'] as List)
+              .map((type) => type['type']['name'].toString().capitalize())
+              .toList();
 
-    return enrichedResults.map((e) => PokemonModel.fromJson(e)).toList();
+          // Validación de campos requeridos
+          if (name == null || imageUrl == null || color == null || types.isEmpty) {
+            return null;
+          }
+
+          return {
+            'number': '#${pokemon['id'].toString().padLeft(3, '0')}',
+            'name': name.toString().capitalize(),
+            'imageUrl': imageUrl,
+            'types': types,
+            'color': color,
+          };
+        } catch (e) {
+          logError('Error fetching/enriching: $e');
+          return null;
+        }
+      }),
+    );
+
+    // Filtrar nulos y mapear a modelo
+    return enrichedResults
+        .where((e) => e != null)
+        .map((e) => PokemonModel.fromJson(e!))
+        .toList();
   }
 }
