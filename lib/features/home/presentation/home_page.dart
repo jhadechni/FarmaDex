@@ -61,9 +61,11 @@ class _HomePageState extends State<HomePage> {
                   builder: (context, constraints) {
                     final double screenWidth = constraints.maxWidth;
 
-                    int crossAxisCount = (screenWidth / 160).floor().clamp(1, 4); // máx 4 columnas
+                    int crossAxisCount = (screenWidth / 156)
+                        .floor()
+                        .clamp(1, 4); // máx 4 columnas
                     final double itemWidth = screenWidth / crossAxisCount;
-                    const double itemHeight = 190;
+                    const double itemHeight = 156;
                     final double aspectRatio = itemWidth / itemHeight;
 
                     return GridView.builder(
@@ -89,12 +91,9 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
-
                 const SizedBox(height: 16),
-
                 if (viewModel.isLoadingMore)
                   const Center(child: CircularProgressIndicator()),
-
                 if (viewModel.allLoaded && !viewModel.isLoadingMore)
                   const Center(
                     child: Padding(
