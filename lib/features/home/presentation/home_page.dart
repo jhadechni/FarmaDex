@@ -57,25 +57,35 @@ class _HomePageState extends State<HomePage> {
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
               children: [
-                // GRID embebido dentro del ListView
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: viewModel.pokemons.length,
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 200,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 3 / 4,
-                  ),
-                  itemBuilder: (_, index) {
-                    final pokemon = viewModel.pokemons[index];
-                    return MiniPokemonCard(
-                      pokemonName: pokemon.name,
-                      pokemonNumber: pokemon.number,
-                      types: pokemon.types,
-                      imagePath: pokemon.imageUrl,
-                      color: pokemon.color,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double screenWidth = constraints.maxWidth;
+
+                    int crossAxisCount = (screenWidth / 160).floor().clamp(1, 4); // máx 4 columnas
+                    final double itemWidth = screenWidth / crossAxisCount;
+                    const double itemHeight = 190;
+                    final double aspectRatio = itemWidth / itemHeight;
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: viewModel.pokemons.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: aspectRatio,
+                      ),
+                      itemBuilder: (_, index) {
+                        final pokemon = viewModel.pokemons[index];
+                        return MiniPokemonCard(
+                          pokemonName: pokemon.name,
+                          pokemonNumber: pokemon.number,
+                          types: pokemon.types,
+                          imagePath: pokemon.imageUrl,
+                          color: pokemon.color,
+                        );
+                      },
                     );
                   },
                 ),

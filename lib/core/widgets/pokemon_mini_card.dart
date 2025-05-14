@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pokeball_logo.dart';
 
 class MiniPokemonCard extends StatelessWidget {
   final String pokemonName;
@@ -19,58 +20,72 @@ class MiniPokemonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: mapColor(color),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Número
-          Align(
-            alignment: Alignment.topRight,
-            child: Text(
-              pokemonNumber,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontWeight: FontWeight.bold,
-              ),
+          // pokeball logo
+          Positioned(
+            bottom: -10,
+            right: -10,
+            child: PokeballLogo(
+              size: 100,
+              color: Colors.white.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 4),
-          // Nombre del Pokémon
-          Text(
-            pokemonName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: Image.network(
+              imagePath,
+              height: 90,
+              fit: BoxFit.contain,
+              //if error, show default image
+              errorBuilder: (context, error, stackTrace) {
+                return Image.network(
+                  'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1200px-International_Pok%C3%A9mon_logo.svg.png',
+                  height: 90,
+                  fit: BoxFit.contain,
+                );
+              },
             ),
           ),
-          const SizedBox(height: 8),
-          // Tipos
-          for (final type in types)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: TypeChip(label: type),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Text(
+                    pokemonNumber,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  pokemonName,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                for (final type in types)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: TypeChip(label: type),
+                  ),
+              ],
             ),
-          const SizedBox(height: 8),
-          // Imagen
-          Center(
-              child: Image.network(
-            imagePath,
-            height: 80,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Image.network(
-                'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/International_Pok%C3%A9mon_logo.svg/1200px-International_Pok%C3%A9mon_logo.svg.png',
-                height: 80,
-                fit: BoxFit.contain,
-              );
-            },
-          )),
+          ),
         ],
       ),
     );
@@ -103,7 +118,6 @@ Color mapColor(String color) {
       return Colors.grey;
   }
 }
-
 class TypeChip extends StatelessWidget {
   final String label;
 
