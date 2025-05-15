@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loggy/loggy.dart';
+import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_page.dart';
 import 'package:provider/provider.dart';
 
 import 'core/di/injector.dart';
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => sl<HomeViewModel>()..fetchInitialPokemons(),
       child: const MaterialApp(
-        home: HomePage(),
+        home: HomePage()
       ),
     );
   }

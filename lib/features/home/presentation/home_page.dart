@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:loggy/loggy.dart';
+import 'package:pokedex/core/di/injector.dart';
+import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
 import 'package:provider/provider.dart';
 import '../../../core/widgets/pokemon_mini_card.dart';
+import '../../pokemon_detail/presentation/pokemon_detail_page.dart';
 import 'home_view_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -55,7 +59,7 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -81,6 +85,21 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (_, index) {
                         final pokemon = viewModel.pokemons[index];
                         return MiniPokemonCard(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChangeNotifierProvider(
+                                  create: (_) => sl<PokemonDetailViewModel>()
+                                    ..fetchDetail(pokemon.name),
+                                  child: const PokemonDetailPage(),
+                                ),
+                              ),
+                            );
+                            logInfo(
+                              'Navigating to detail page for ${pokemon.name}',
+                            );
+                          },
                           pokemonName: pokemon.name,
                           pokemonNumber: pokemon.number,
                           types: pokemon.types,
@@ -99,7 +118,7 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: EdgeInsets.only(top: 16, bottom: 32),
                       child: Text(
-                        'No hay más pokemons, por ahora...',
+                        'No more pokemons, for now...',
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           fontSize: 16,
