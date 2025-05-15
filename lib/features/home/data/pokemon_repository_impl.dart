@@ -74,4 +74,49 @@ class PokemonRepositoryImpl implements PokemonRepository {
         .map((e) => PokemonModel.fromJson(e!))
         .toList();
   }
+  @override
+Future<PokemonEntity> getPokemonDetail(String name) async {
+  final response = await client.get(
+    Uri.parse('https://pokeapi.co/api/v2/pokemon/$name'),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to fetch detail for $name');
+  }
+
+  final data = json.decode(response.body);
+  final speciesRes = await client.get(Uri.parse(data['species']['url']));
+  if (speciesRes.statusCode != 200) {
+    throw Exception('Failed to fetch species for $name');
+  }
+
+  final species = json.decode(speciesRes.body);
+
+  return PokemonModel.fromJson({
+    'number': '#${data['id'].toString().padLeft(3, '0')}',
+    'name': data['name'].toString().capitalize(),
+    'imageUrl': data['sprites']['other']['official-artwork']['front_default'],
+    'types': (data['types'] as List)
+        .map((type) => type['type']['name'].toString().capitalize())
+        .toList(),
+    'color': species['color']['name'],
+  });
+}
+
+@override
+Future<List<String>> getAllPokemonNames() async {
+  final response = await client.get(
+    Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0'),
+  );
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to fetch all names');
+  }
+
+  final data = json.decode(response.body);
+  return (data['results'] as List)
+      .map((item) => item['name'].toString().toLowerCase())
+      .toList();
+}
+
 }
