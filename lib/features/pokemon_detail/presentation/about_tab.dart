@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:pokedex/core/widgets/gender_bar.dart';
-import 'package:pokedex/features/pokemon_detail/domain/pokemon_detail_entity.dart';
+import 'package:provider/provider.dart';
+
+import 'pokemon_detail_view_model.dart';
 
 class AboutTab extends StatelessWidget {
-  final PokemonDetailEntity pokemon;
-
-  const AboutTab({super.key, required this.pokemon});
+  const AboutTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final pokemon = context.watch<PokemonDetailViewModel>().pokemonDetail!;
     final screenWidth = MediaQuery.of(context).size.width;
     final itemWidth = (screenWidth - 60) / 2;
 
@@ -61,7 +62,7 @@ class AboutTab extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-           GenderRatioBar(
+          GenderRatioBar(
             malePercentage: pokemon.maleRate,
             femalePercentage: pokemon.femaleRate,
           ),

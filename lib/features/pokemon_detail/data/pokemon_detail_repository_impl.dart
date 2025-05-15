@@ -16,16 +16,13 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
   @override
   Future<PokemonDetailModel> getPokemonDetail(String name) async {
     final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
-    final cached = box.get(name);
-    logInfo('[CACHE] Checking Hive for $name');
-    final allKeys = box.keys;
-    logInfo('[CACHE] All keys in box: $allKeys');
+    final key = _normalizeKey(name);
 
-    final cachedCheck = box.get(name);
-    logInfo('[CACHE] Value from Hive: $cachedCheck');
+    logInfo('[CACHE] Checking Hive for $key');
+    final cached = box.get(key);
 
     if (cached != null) {
-      logInfo('Returning $name from Hive cache');
+      logInfo('✅ Returning $key from Hive cache');
       return cached.toModel();
     }
 
@@ -36,17 +33,14 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
     }
     final data = json.decode(pokemonRes.body);
 
-    // species
     final speciesRes = await client.get(Uri.parse(data['species']['url']));
     final speciesData = json.decode(speciesRes.body);
 
-    // description
     final flavor = (speciesData['flavor_text_entries'] as List).firstWhere(
       (entry) => entry['language']['name'] == 'en',
       orElse: () => {'flavor_text': ''},
     );
 
-    // encounter areas
     final encountersRes =
         await client.get(Uri.parse(data['location_area_encounters']));
     final encounterData = json.decode(encountersRes.body);
@@ -54,7 +48,6 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
         .map((e) => e['location_area']['name'].toString().replaceAll('-', ' '))
         .toList();
 
-    // evolutions
     final evolutionChainUrl = speciesData['evolution_chain']['url'];
     final evoRes = await client.get(Uri.parse(evolutionChainUrl));
     final evoData = json.decode(evoRes.body);
@@ -88,18 +81,15 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
           e.gifUrl
         }).toList()}');
 
-    // stats
     final statsMap = <String, int>{};
     for (var stat in data['stats']) {
       statsMap[stat['stat']['name']] = stat['base_stat'];
     }
 
-    // gender
     final genderRate = speciesData['gender_rate'];
     final male = genderRate == -1 ? 0.0 : (8 - genderRate) * 12.5;
     final female = genderRate == -1 ? 0.0 : genderRate * 12.5;
 
-    // moves with detail
     final moveModels = <MoveModel>[];
     for (final move in data['moves']) {
       final versionDetails = move['version_group_details'] as List;
@@ -146,17 +136,14 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
       femaleRate: female,
     );
 
-    logInfo('[CACHE] Stats: $statsMap');
-
-    await box.put(name, pokeModel.toCache());
-    logInfo('[CACHE] Saved $name to Hive');
-
-    final contains = box.containsKey(name);
-    logInfo('[CACHE] Hive contains $name? $contains');
-    
+    await box.put(key, pokeModel.toCache());
+    logInfo('[CACHE] Saved $key to Hive');
 
     return pokeModel;
   }
+
+  String _normalizeKey(String name) =>
+      name.isEmpty ? name : name[0].toUpperCase() + name.substring(1).toLowerCase();
 }
 
 String _extractIdFromUrl(String url) {
