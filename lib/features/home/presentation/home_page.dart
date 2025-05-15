@@ -5,6 +5,8 @@ import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/core/di/injector.dart';
 import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import 'package:pokedex/features/pokemon_registration/presentation/my_pokemon_page.dart';
+import 'package:pokedex/features/pokemon_registration/presentation/pokemon_registration_page.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -176,6 +178,20 @@ class _HomePageState extends State<HomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const FavoritesPage()),
+            );
+          }, maxWidth),
+          _buildLabelWidgetButton(
+              'Create a pokémon', FontAwesomeIcons.kiwiBird, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PokemonRegisterPage()),
+            );
+          }, maxWidth),
+          _buildLabelWidgetButton(
+              'My Pokémons', FontAwesomeIcons.kiwiBird, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyPokemonsPage()),
             );
           }, maxWidth),
         ],
