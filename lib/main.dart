@@ -7,6 +7,7 @@ import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import 'package:provider/provider.dart';
 
 import 'core/cache/adapters/cached_evolution.dart';
+import 'core/cache/adapters/registered_pokemon.dart';
 import 'core/di/injector.dart';
 import 'features/favorites/presentation/favorites_view_model.dart';
 import 'features/home/presentation/home_page.dart';
@@ -21,11 +22,12 @@ void main() async {
   Hive.registerAdapter(CachedMoveAdapter());
   Hive.registerAdapter(CachedEvolutionAdapter());
   Hive.registerAdapter(CachedPokemonDetailAdapter());
-
+  Hive.registerAdapter(RegisteredPokemonAdapter());
   try {
     await Hive.openBox<CachedPokemonDetail>('pokemon_detail_cache');
     await Hive.openBox<String>('favorites_box');
-    logInfo('Hive box opened successfully');
+    await Hive.openBox<RegisteredPokemon>('registered_pokemons');
+    logInfo('Hive boxes opened successfully');
   } catch (e, st) {
     logError('Error opening box: $e', e, st);
   }

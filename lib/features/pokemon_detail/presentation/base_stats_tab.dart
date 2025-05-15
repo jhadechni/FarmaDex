@@ -15,63 +15,65 @@ class BaseStatsTab extends StatelessWidget {
     final total = stats.values.reduce((a, b) => a + b);
 
     return Padding(
-      padding: const EdgeInsets.all(15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          StatBar(label: 'HP', value: stats['hp'] ?? 0, maxValue: 255),
-          const SizedBox(height: 12),
-          StatBar(label: 'Attack', value: stats['attack'] ?? 0, maxValue: 255),
-          const SizedBox(height: 12),
-          StatBar(label: 'Defense', value: stats['defense'] ?? 0, maxValue: 255),
-          const SizedBox(height: 12),
-          StatBar(label: 'Sp. Atk', value: stats['special-attack'] ?? 0, maxValue: 255),
-          const SizedBox(height: 12),
-          StatBar(label: 'Sp. Def', value: stats['special-defense'] ?? 0, maxValue: 255),
-          const SizedBox(height: 12),
-          StatBar(label: 'Speed', value: stats['speed'] ?? 0, maxValue: 255),
-          const SizedBox(height: 16),
-          StatBar(label: 'Total', value: total, maxValue: 750),
-          const SizedBox(height: 32),
-          const Text(
-            'Encounter Locations',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.all(20),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            StatBar(label: 'HP', value: stats['hp'] ?? 0, maxValue: 255),
+            const SizedBox(height: 12),
+            StatBar(label: 'Attack', value: stats['attack'] ?? 0, maxValue: 255),
+            const SizedBox(height: 12),
+            StatBar(label: 'Defense', value: stats['defense'] ?? 0, maxValue: 255),
+            const SizedBox(height: 12),
+            StatBar(label: 'Sp. Atk', value: stats['special-attack'] ?? 0, maxValue: 255),
+            const SizedBox(height: 12),
+            StatBar(label: 'Sp. Def', value: stats['special-defense'] ?? 0, maxValue: 255),
+            const SizedBox(height: 12),
+            StatBar(label: 'Speed', value: stats['speed'] ?? 0, maxValue: 255),
+            const SizedBox(height: 16),
+            StatBar(label: 'Total', value: total, maxValue: 750),
+            const SizedBox(height: 32),
+            const Text(
+              'Encounter Locations',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'The locations where this Pokémon can be found in the wild.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
+            const SizedBox(height: 12),
+            const Text(
+              'The locations where this Pokémon can be found in the wild.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
-          ),
-          if (pokemon.encounterAreas.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 8),
-              child: Text(
-                'No encounter locations found.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.black54,
+            if (pokemon.encounterAreas.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  'No encounter locations found.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+              )
+            else
+              const SizedBox(height: 12),
+            for (final area in pokemon.encounterAreas)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: StatBar(
+                  label: area.capitalize(),
+                  value: 100, // Puedes ajustar a valor real si lo tienes
+                  maxValue: 100,
+                  hasPercentage: true,
                 ),
               ),
-            )
-          else
-            const SizedBox(height: 12),
-          for (final area in pokemon.encounterAreas)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: StatBar(
-                label: area.capitalize(),
-                value: 100, // Puedes ajustar a valor real si lo tienes
-                maxValue: 100,
-                hasPercentage: true,
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

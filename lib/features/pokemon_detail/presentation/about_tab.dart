@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:pokedex/core/widgets/gender_bar.dart';
 import 'package:provider/provider.dart';
@@ -34,19 +35,19 @@ class AboutTab extends StatelessWidget {
             runSpacing: 16,
             children: [
               InfoGridElement(
-                icon: Icons.scale,
+                icon: FontAwesomeIcons.weightHanging,
                 label: 'Weight',
                 value: pokemon.weight,
                 width: itemWidth,
               ),
               InfoGridElement(
-                icon: Icons.height,
+                icon: FontAwesomeIcons.rulerVertical,
                 label: 'Height',
                 value: pokemon.height,
                 width: itemWidth,
               ),
               InfoGridElement(
-                icon: Icons.bubble_chart,
+                icon: FontAwesomeIcons.bolt,
                 label: 'Abilities',
                 value: pokemon.abilities.isNotEmpty
                     ? pokemon.abilities.first.capitalize()
@@ -54,7 +55,7 @@ class AboutTab extends StatelessWidget {
                 width: itemWidth,
               ),
               InfoGridElement(
-                icon: Icons.pets,
+                icon: FontAwesomeIcons.egg,
                 label: 'Species',
                 value: pokemon.specie,
                 width: itemWidth,
