@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pokedex/core/widgets/pokeball_logo.dart';
 
 class EvolutionItem extends StatelessWidget {
   final String imageUrl;
@@ -16,43 +15,28 @@ class EvolutionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Aumentamos el tamaño base
-    final avatarSize = screenWidth < 400 ? 50.0 : 65.0;
-    final logoSize = avatarSize * 1.7;
+    final imageSize = screenWidth < 400 ? 60.0 : 100.0;
 
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          width: logoSize,
-          height: logoSize,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              PokeballLogo(size: logoSize, color: Colors.grey.shade200),
-              CircleAvatar(
-                radius: avatarSize * 0.5,
-                backgroundColor: Colors.transparent,
-                backgroundImage: NetworkImage(imageUrl),
-              ),
-            ],
+        Container(
+          width: imageSize,
+          height: imageSize,
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: NetworkImage(imageUrl),
+              fit: BoxFit.contain,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         Text(
           number,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Colors.grey),
         ),
       ],
     );

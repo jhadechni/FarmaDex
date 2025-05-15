@@ -5,6 +5,8 @@ import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/core/di/injector.dart';
 import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import 'package:pokedex/features/pokemon_registration/presentation/my_pokemon_page.dart';
+import 'package:pokedex/features/pokemon_registration/presentation/pokemon_registration_page.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -24,13 +26,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<HomeViewModel>().fetchInitialPokemons();
+        final viewModel = context.read<HomeViewModel>();
+        viewModel.fetchInitialPokemons();
+        viewModel.fetchAllPokemonNames();
       }
     });
 
@@ -53,6 +58,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -63,28 +69,32 @@ class _HomePageState extends State<HomePage> {
     final maxWidth = screenWidth * 0.7;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('FarmaDex'),
-        leading: ElevatedButton(
-          onPressed: () async {
-            final favBox = Hive.box<String>('favorites_box');
-            final cacheBox =
-                Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
-            print('[DEBUG] Favoritos guardados: ${favBox.values.toList()}');
-            print('[DEBUG] Cache contiene: ${cacheBox.keys}');
-            await favBox.clear();
-            await cacheBox.clear();
-            print('[DEBUG2] Favoritos guardados: ${favBox.values.toList()}');
-          },
-          child: const Text('Borrar'),
-        ),
-      ),
+      appBar: AppBar(title: const Text('FarmaDex')),
       body: viewModel.isLoading && viewModel.pokemons.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               controller: _scrollController,
               padding: const EdgeInsets.all(14),
               children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: viewModel.updateSearchQuery,
+                    decoration: InputDecoration(
+                      hintText: 'Search Pokémon',
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                  ),
+                ),
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final double screenWidth = constraints.maxWidth;
@@ -97,7 +107,7 @@ class _HomePageState extends State<HomePage> {
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: viewModel.pokemons.length,
+                      itemCount: viewModel.filteredPokemons.length,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: crossAxisCount,
                         mainAxisSpacing: 10,
@@ -105,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                         childAspectRatio: aspectRatio,
                       ),
                       itemBuilder: (_, index) {
-                        final pokemon = viewModel.pokemons[index];
+                        final pokemon = viewModel.filteredPokemons[index];
                         return MiniPokemonCard(
                           onTap: () {
                             Navigator.push(
@@ -168,6 +178,20 @@ class _HomePageState extends State<HomePage> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const FavoritesPage()),
+            );
+          }, maxWidth),
+          _buildLabelWidgetButton(
+              'Create a pokémon', FontAwesomeIcons.kiwiBird, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PokemonRegisterPage()),
+            );
+          }, maxWidth),
+          _buildLabelWidgetButton(
+              'My Pokémons', FontAwesomeIcons.kiwiBird, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MyPokemonsPage()),
             );
           }, maxWidth),
         ],

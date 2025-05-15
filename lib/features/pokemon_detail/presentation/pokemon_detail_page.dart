@@ -91,8 +91,13 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pokémon Detail'),
+        title: const Text('Pokémon Detail',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.white
+            )),
         backgroundColor: color,
+         iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
         elevation: 0,
         actions: [
@@ -218,7 +223,7 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
           SlidingUpPanel(
             controller: _panelController,
             maxHeight: size.height * 0.9,
-            minHeight: size.height * 0.48,
+            minHeight: size.height * 0.44,
             parallaxEnabled: true,
             parallaxOffset: 0.5,
             borderRadius: const BorderRadius.only(
