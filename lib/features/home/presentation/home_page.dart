@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:loggy/loggy.dart';
-import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/core/di/injector.dart';
+import 'package:pokedex/features/compass/presentation/compass_page.dart';
 import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
 import 'package:pokedex/features/pokemon_registration/presentation/my_pokemon_page.dart';
@@ -188,10 +187,16 @@ class _HomePageState extends State<HomePage> {
             );
           }, maxWidth),
           _buildLabelWidgetButton(
-              'My Pokémons', FontAwesomeIcons.kiwiBird, () {
+              'My Pokémons', FontAwesomeIcons.medal, () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyPokemonsPage()),
+            );
+          }, maxWidth),_buildLabelWidgetButton(
+              'Compass', FontAwesomeIcons.compass, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CompassPage()),
             );
           }, maxWidth),
         ],

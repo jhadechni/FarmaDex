@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/cache/adapters/cached_move.dart';
 import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
-import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import 'package:provider/provider.dart';
 
 import 'core/cache/adapters/cached_evolution.dart';

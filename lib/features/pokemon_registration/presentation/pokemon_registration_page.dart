@@ -227,7 +227,7 @@ class _PokemonRegisterPageState extends State<PokemonRegisterPage> {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: _submitForm,
-                    icon: Icon(FontAwesomeIcons.save),
+                    icon: const Icon(FontAwesomeIcons.save),
                     label: const Text('Save Pokémon'),
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48),

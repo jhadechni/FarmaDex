@@ -75,7 +75,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<PokemonDetailViewModel>();
-    final favViewModel = context.watch<FavoritesViewModel>();
     final pokemon = viewModel.pokemonDetail;
 
     if (viewModel.isLoading || pokemon == null) {
@@ -87,7 +86,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
     final color = pokemon.color.toColor();
     final size = MediaQuery.of(context).size;
     final normalizedName = pokemon.name[0].toUpperCase() + pokemon.name.substring(1).toLowerCase();
-    final isFav = favViewModel.isFavorite(normalizedName);
 
     return Scaffold(
       appBar: AppBar(
