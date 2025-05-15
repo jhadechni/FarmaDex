@@ -1,11 +1,16 @@
 import UIKit
 import Flutter
+import CoreLocation
 
 @main
-@objc class AppDelegate: FlutterAppDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+@objc class AppDelegate: FlutterAppDelegate, UINavigationControllerDelegate, UIImagePickerControllerDelegate, CLLocationManagerDelegate {
   var flutterResult: FlutterResult?
   var imagePicker: UIImagePickerController?
   var flutterViewController: FlutterViewController?
+
+  // Compass
+  var locationManager: CLLocationManager!
+  var currentHeading: CLLocationDirection = 0
 
   override func application(
     _ application: UIApplication,
@@ -15,8 +20,9 @@ import Flutter
     let controller = window?.rootViewController as! FlutterViewController
     flutterViewController = controller
 
-    let channel = FlutterMethodChannel(name: "com.pokedex.image", binaryMessenger: controller.binaryMessenger)
-    channel.setMethodCallHandler { [weak self] call, result in
+    // Immage channel
+    let imageChannel = FlutterMethodChannel(name: "com.pokedex.image", binaryMessenger: controller.binaryMessenger)
+    imageChannel.setMethodCallHandler { [weak self] call, result in
       self?.flutterResult = result
 
       switch call.method {
@@ -29,9 +35,28 @@ import Flutter
       }
     }
 
+    // compass channel
+    let compassChannel = FlutterMethodChannel(name: "com.pokedex.compass", binaryMessenger: controller.binaryMessenger)
+    compassChannel.setMethodCallHandler { [weak self] call, result in
+      if call.method == "getAzimuth" {
+        result(self?.currentHeading ?? 0)
+      } else {
+        result(FlutterMethodNotImplemented)
+      }
+    }
+
+    // compass setup
+    locationManager = CLLocationManager()
+    locationManager.delegate = self
+    locationManager.headingFilter = 1
+    locationManager.requestWhenInUseAuthorization()
+    locationManager.startUpdatingHeading()
+
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+
+  // MARK: - Image Picker
 
   func openImagePicker(source: UIImagePickerController.SourceType) {
     guard UIImagePickerController.isSourceTypeAvailable(source) else {
@@ -69,5 +94,11 @@ import Flutter
   func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
     picker.dismiss(animated: true, completion: nil)
     flutterResult?(nil)
+  }
+
+  // MARK: - Compass
+
+  func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+    currentHeading = newHeading.magneticHeading
   }
 }

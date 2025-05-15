@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/cache/adapters/cached_move.dart';
 import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
-import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import 'package:provider/provider.dart';
 
 import 'core/cache/adapters/cached_evolution.dart';
@@ -39,15 +38,23 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
+        ChangeNotifierProvider(
+            create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
         ChangeNotifierProvider(create: (_) => sl<FavoritesViewModel>()),
       ],
-      child: const MaterialApp(home: HomePage()),
+      child: MaterialApp(
+        home: const HomePage(),
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+            primaryColor: Colors.indigo,
+            primarySwatch: Colors.indigo,
+            fontFamily: 'ProductSans'),
+      ),
     );
   }
 }
