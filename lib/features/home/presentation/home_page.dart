@@ -55,7 +55,7 @@ class _HomePageState extends State<HomePage> {
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               controller: _scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(14),
               children: [
                 LayoutBuilder(
                   builder: (context, constraints) {
@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                     child: Padding(
                       padding: EdgeInsets.only(top: 16, bottom: 32),
                       child: Text(
-                        'No hay más pokemons, por ahora...',
+                        'No more pokemons, for now...',
                         style: TextStyle(
                           fontStyle: FontStyle.italic,
                           fontSize: 16,
