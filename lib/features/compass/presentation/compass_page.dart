@@ -12,7 +12,6 @@ class CompassPage extends StatefulWidget {
 
 class _CompassPageState extends State<CompassPage> with SingleTickerProviderStateMixin {
   static const platform = MethodChannel('com.pokedex.compass');
-  double _currentAzimuth = 0.0;
   double _displayedAzimuth = 0.0;
 
   late AnimationController _controller;

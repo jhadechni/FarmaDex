@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
@@ -78,24 +79,43 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
     final pokemon = viewModel.pokemonDetail;
 
     if (viewModel.isLoading || pokemon == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Lottie.asset(
+                'lib/core/assets/animations/bulbasaur_charge.json',
+                width: MediaQuery.of(context).size.width * 0.9,
+                repeat: true,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Loading Pokémon details...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
     final color = pokemon.color.toColor();
     final size = MediaQuery.of(context).size;
-    final normalizedName = pokemon.name[0].toUpperCase() + pokemon.name.substring(1).toLowerCase();
+    final normalizedName =
+        pokemon.name[0].toUpperCase() + pokemon.name.substring(1).toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Pokémon Detail',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.white
-            )),
+            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
         backgroundColor: color,
-         iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
         elevation: 0,
         actions: [
@@ -129,7 +149,8 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
                                 ? '${pokemon.name.capitalize()} added to favorites'
                                 : '${pokemon.name.capitalize()} removed from favorites',
                             style: const TextStyle(
-                                color: Colors.black, fontWeight: FontWeight.w500),
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500),
                           ),
                         ),
                       ],
@@ -178,7 +199,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               ],
             ),
           ),
-
           Positioned(
             top: size.height * 0.38,
             left: 0,
@@ -194,7 +214,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               ),
             ),
           ),
-
           Positioned(
             top: size.height * 0.24,
             left: size.width * 0.76 - 40,
@@ -203,7 +222,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               color: Colors.white.withOpacity(0.2),
             ),
           ),
-
           Positioned(
             top: size.height * 0.15,
             left: 0,
@@ -217,7 +235,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               ),
             ),
           ),
-
           SlidingUpPanel(
             controller: _panelController,
             maxHeight: size.height * 0.9,

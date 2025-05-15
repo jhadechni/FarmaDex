@@ -38,15 +38,23 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
+        ChangeNotifierProvider(
+            create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
         ChangeNotifierProvider(create: (_) => sl<FavoritesViewModel>()),
       ],
-      child: const MaterialApp(home: HomePage()),
+      child: MaterialApp(
+        home: const HomePage(),
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+            primaryColor: Colors.indigo,
+            primarySwatch: Colors.indigo,
+            fontFamily: 'ProductSans'),
+      ),
     );
   }
 }

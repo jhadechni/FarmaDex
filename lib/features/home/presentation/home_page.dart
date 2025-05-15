@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loggy/loggy.dart';
+import 'package:lottie/lottie.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:pokedex/core/di/injector.dart';
 import 'package:pokedex/features/compass/presentation/compass_page.dart';
 import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
@@ -68,9 +70,21 @@ class _HomePageState extends State<HomePage> {
     final maxWidth = screenWidth * 0.7;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FarmaDex')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: SizedBox(
+          height: kToolbarHeight * 0.6,
+          child: Image.asset(
+            'lib/core/assets/images/logo.png',
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
       body: viewModel.isLoading && viewModel.pokemons.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Padding(
+            padding: const EdgeInsets.all(14),
+            child: _buildSkeletonGrid(screenWidth),
+          )
           : ListView(
               controller: _scrollController,
               padding: const EdgeInsets.all(14),
@@ -127,9 +141,7 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                             );
-                            logInfo(
-                              'Navigating to detail page for ${pokemon.name}',
-                            );
+                            logInfo('Navigating to detail page for ${pokemon.name}');
                           },
                           pokemonName: pokemon.name,
                           pokemonNumber: pokemon.number,
@@ -143,7 +155,9 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 if (viewModel.isLoadingMore)
-                  const Center(child: CircularProgressIndicator()),
+                  Center(
+                      child: Lottie.asset(
+                          'lib/core/assets/animations/ditto_charge.json')),
                 if (viewModel.allLoaded && !viewModel.isLoadingMore)
                   const Center(
                     child: Padding(
@@ -179,21 +193,20 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (_) => const FavoritesPage()),
             );
           }, maxWidth),
-          _buildLabelWidgetButton(
-              'Create a pokémon', FontAwesomeIcons.kiwiBird, () {
+          _buildLabelWidgetButton('Create a pokémon', FontAwesomeIcons.kiwiBird,
+              () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const PokemonRegisterPage()),
             );
           }, maxWidth),
-          _buildLabelWidgetButton(
-              'My Pokémons', FontAwesomeIcons.medal, () {
+          _buildLabelWidgetButton('My Pokémons', FontAwesomeIcons.medal, () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyPokemonsPage()),
             );
-          }, maxWidth),_buildLabelWidgetButton(
-              'Compass', FontAwesomeIcons.compass, () {
+          }, maxWidth),
+          _buildLabelWidgetButton('Compass', FontAwesomeIcons.compass, () {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CompassPage()),
@@ -201,6 +214,37 @@ class _HomePageState extends State<HomePage> {
           }, maxWidth),
         ],
       ),
+    );
+  }
+
+  Widget _buildSkeletonGrid(double screenWidth) {
+    int crossAxisCount = (screenWidth / 156).floor().clamp(1, 4);
+    const double itemHeight = 156;
+    final double itemWidth = screenWidth / crossAxisCount;
+    final double aspectRatio = itemWidth / itemHeight;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 8,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: aspectRatio,
+      ),
+      itemBuilder: (_, __) {
+        return Shimmer.fromColors(
+          baseColor: Colors.grey.shade300,
+          highlightColor: Colors.grey.shade100,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        );
+      },
     );
   }
 

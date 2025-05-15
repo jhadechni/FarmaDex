@@ -44,6 +44,7 @@ class _PokemonRegisterPageState extends State<PokemonRegisterPage> {
         });
       }
     } on PlatformException catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.message}')),
       );
@@ -130,7 +131,7 @@ class _PokemonRegisterPageState extends State<PokemonRegisterPage> {
     final avatarRadius = screenWidth < 400 ? 60.0 : 80.0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Register Pokémon')),
+      appBar: AppBar(title: const Text('Create a Pokémon')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Center(
@@ -227,6 +228,7 @@ class _PokemonRegisterPageState extends State<PokemonRegisterPage> {
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: _submitForm,
+                    // ignore: deprecated_member_use
                     icon: const Icon(FontAwesomeIcons.save),
                     label: const Text('Save Pokémon'),
                     style: ElevatedButton.styleFrom(
