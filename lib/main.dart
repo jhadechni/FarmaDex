@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loggy/loggy.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_page.dart';
+import 'package:pokedex/core/cache/adapters/cached_move.dart';
+import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
+import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import 'package:provider/provider.dart';
 
+import 'core/cache/adapters/cached_evolution.dart';
 import 'core/di/injector.dart';
 import 'features/home/presentation/home_page.dart';
 import 'features/home/presentation/home_view_model.dart';
@@ -11,12 +14,22 @@ import 'features/home/presentation/home_view_model.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   init();
+
   await Hive.initFlutter();
-  Loggy.initLoggy(
-    logPrinter: const PrettyPrinter(
-      showColors: true
-    ),
-  );
+
+  Hive.registerAdapter(CachedMoveAdapter());
+  Hive.registerAdapter(CachedEvolutionAdapter());
+  Hive.registerAdapter(CachedPokemonDetailAdapter());
+
+  try {
+    await Hive.openBox<CachedPokemonDetail>('pokemon_detail_cache');
+    logInfo('Hive box opened successfully');
+  } catch (e, st) {
+    logError('Error opening box: $e', e, st);
+  }
+
+  Loggy.initLoggy(logPrinter: const PrettyPrinter(showColors: true));
+
   runApp(const MyApp());
 }
 
@@ -27,9 +40,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => sl<HomeViewModel>()..fetchInitialPokemons(),
-      child: const MaterialApp(
-        home: HomePage()
-      ),
+      child: const MaterialApp(home: HomePage()),
     );
   }
 }
