@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import 'core/cache/adapters/cached_evolution.dart';
 import 'core/di/injector.dart';
+import 'features/favorites/presentation/favorites_view_model.dart';
 import 'features/home/presentation/home_page.dart';
 import 'features/home/presentation/home_view_model.dart';
 
@@ -23,6 +24,7 @@ void main() async {
 
   try {
     await Hive.openBox<CachedPokemonDetail>('pokemon_detail_cache');
+    await Hive.openBox<String>('favorites_box');
     logInfo('Hive box opened successfully');
   } catch (e, st) {
     logError('Error opening box: $e', e, st);
@@ -35,11 +37,14 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
+  
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => sl<HomeViewModel>()..fetchInitialPokemons(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
+        ChangeNotifierProvider(create: (_) => sl<FavoritesViewModel>()),
+      ],
       child: const MaterialApp(home: HomePage()),
     );
   }

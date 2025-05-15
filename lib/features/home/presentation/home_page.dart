@@ -3,11 +3,17 @@ import 'package:hive/hive.dart';
 import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/core/di/injector.dart';
+import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import '../../../core/widgets/pokemon_mini_card.dart';
 import '../../pokemon_detail/presentation/pokemon_detail_page.dart';
 import 'home_view_model.dart';
+
+const Color primaryAccent = Color(0xFF6B79DB);
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,7 +28,6 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<HomeViewModel>().fetchInitialPokemons();
@@ -54,17 +59,24 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxWidth = screenWidth * 0.7;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('FarmaDex'),
         leading: ElevatedButton(
-          onPressed: () {
-            final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
-            final cached = box.get('Bulbasaur');
-            logError(cached?.name ?? 'No data in cache');
+          onPressed: () async {
+            final favBox = Hive.box<String>('favorites_box');
+            final cacheBox =
+                Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
+            print('[DEBUG] Favoritos guardados: ${favBox.values.toList()}');
+            print('[DEBUG] Cache contiene: ${cacheBox.keys}');
+            await favBox.clear();
+            await cacheBox.clear();
+            print('[DEBUG2] Favoritos guardados: ${favBox.values.toList()}');
           },
-          child: const Text("Check Cache"),
+          child: const Text('Borrar'),
         ),
       ),
       body: viewModel.isLoading && viewModel.pokemons.isEmpty
@@ -76,10 +88,8 @@ class _HomePageState extends State<HomePage> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final double screenWidth = constraints.maxWidth;
-
-                    int crossAxisCount = (screenWidth / 156)
-                        .floor()
-                        .clamp(1, 4); // máx 4 columnas
+                    int crossAxisCount =
+                        (screenWidth / 156).floor().clamp(1, 4);
                     final double itemWidth = screenWidth / crossAxisCount;
                     const double itemHeight = 156;
                     final double aspectRatio = itemWidth / itemHeight;
@@ -141,6 +151,73 @@ class _HomePageState extends State<HomePage> {
                   ),
               ],
             ),
+      floatingActionButton: SpeedDial(
+        icon: FontAwesomeIcons.sliders,
+        activeIcon: FontAwesomeIcons.x,
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: primaryAccent,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.4,
+        elevation: 10,
+        spacing: 16,
+        animationDuration: const Duration(milliseconds: 200),
+        spaceBetweenChildren: 5,
+        children: [
+          _buildLabelWidgetButton(
+              'Favorite Pokemons', FontAwesomeIcons.solidHeart, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesPage()),
+            );
+          }, maxWidth),
+        ],
+      ),
+    );
+  }
+
+  SpeedDialChild _buildLabelWidgetButton(
+    String text,
+    IconData icon,
+    VoidCallback onTap,
+    double maxWidth,
+  ) {
+    return SpeedDialChild(
+      backgroundColor: Colors.white,
+      elevation: 4,
+      labelWidget: Container(
+        constraints: BoxConstraints(maxWidth: maxWidth),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 12),
+            FaIcon(icon, color: primaryAccent, size: 18),
+          ],
+        ),
+      ),
+      onTap: onTap,
     );
   }
 }

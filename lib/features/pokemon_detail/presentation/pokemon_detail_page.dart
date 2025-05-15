@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:provider/provider.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import '../../favorites/presentation/favorites_view_model.dart';
 import 'about_tab.dart';
 import 'base_stats_tab.dart';
 import 'evolution_tab.dart';
@@ -10,6 +11,7 @@ import '../../../core/utils/color_mapper.dart';
 import '../../../core/widgets/pokeball_logo.dart';
 import '../../../core/widgets/type_chips.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class PokemonDetailPage extends StatefulWidget {
   const PokemonDetailPage({super.key});
@@ -35,9 +37,45 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
     super.dispose();
   }
 
+  void showTopNotification(BuildContext context, Widget content) {
+    final overlay = Overlay.of(context);
+    final entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 16,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: content,
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      entry.remove();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<PokemonDetailViewModel>();
+    final favViewModel = context.watch<FavoritesViewModel>();
     final pokemon = viewModel.pokemonDetail;
 
     if (viewModel.isLoading || pokemon == null) {
@@ -48,17 +86,66 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
 
     final color = pokemon.color.toColor();
     final size = MediaQuery.of(context).size;
+    final normalizedName = pokemon.name[0].toUpperCase() + pokemon.name.substring(1).toLowerCase();
+    final isFav = favViewModel.isFavorite(normalizedName);
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pokémon Detail'),
+        backgroundColor: color,
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          Consumer<FavoritesViewModel>(
+            builder: (context, favViewModel, _) {
+              final isFav = favViewModel.isFavorite(normalizedName);
+              return IconButton(
+                icon: FaIcon(
+                  isFav ? FontAwesomeIcons.solidHeart : FontAwesomeIcons.heart,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                onPressed: () {
+                  favViewModel.toggle(normalizedName);
+
+                  showTopNotification(
+                    context,
+                    Row(
+                      children: [
+                        FaIcon(
+                          !isFav
+                              ? FontAwesomeIcons.heartCirclePlus
+                              : FontAwesomeIcons.heartCircleMinus,
+                          color: !isFav ? Colors.green[400] : Colors.red[300],
+                          size: 18,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            !isFav
+                                ? '${pokemon.name.capitalize()} added to favorites'
+                                : '${pokemon.name.capitalize()} removed from favorites',
+                            style: const TextStyle(
+                                color: Colors.black, fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
       backgroundColor: color,
       body: Stack(
         children: [
-          // HEADER
           Container(
             height: size.height * 0.3,
             width: double.infinity,
             color: color,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 70),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -89,7 +176,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             ),
           ),
 
-          // Fondo blanco detrás del panel
           Positioned(
             top: size.height * 0.38,
             left: 0,
@@ -106,7 +192,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             ),
           ),
 
-          // Pokebola
           Positioned(
             top: size.height * 0.24,
             left: size.width * 0.76 - 40,
@@ -116,7 +201,6 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             ),
           ),
 
-          // Imagen
           Positioned(
             top: size.height * 0.15,
             left: 0,
@@ -131,11 +215,10 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             ),
           ),
 
-          // Panel
           SlidingUpPanel(
             controller: _panelController,
             maxHeight: size.height * 0.9,
-            minHeight: size.height * 0.59,
+            minHeight: size.height * 0.48,
             parallaxEnabled: true,
             parallaxOffset: 0.5,
             borderRadius: const BorderRadius.only(
@@ -178,8 +261,8 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
-                      children: [
-                        AboutTab(pokemon: pokemon,),
+                      children: const [
+                        AboutTab(),
                         BaseStatsTab(),
                         EvolutionTab(),
                         MovesTab(),
