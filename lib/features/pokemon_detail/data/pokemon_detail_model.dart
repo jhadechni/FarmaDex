@@ -1,5 +1,8 @@
 import 'package:pokedex/features/pokemon_detail/data/move_model.dart';
 import 'package:pokedex/features/pokemon_detail/domain/pokemon_detail_entity.dart';
+import '../../../core/cache/adapters/cached_evolution.dart';
+import '../../../core/cache/adapters/cached_move.dart';
+import '../../../core/cache/adapters/cached_pokemon_detail.dart';
 import 'evolution_model.dart';
 
 class PokemonDetailModel extends PokemonDetailEntity {
@@ -64,5 +67,26 @@ class PokemonDetailModel extends PokemonDetailEntity {
       'maleRate': maleRate,
       'femaleRate': femaleRate,
     };
+  }
+
+  CachedPokemonDetail toCache() {
+    return CachedPokemonDetail(
+      name: name,
+      number: number,
+      types: types,
+      color: color,
+      specie: specie,
+      imageUrl: imageUrl,
+      height: height,
+      weight: weight,
+      abilities: abilities,
+      description: description,
+      moves: moves.map((m) => CachedMove.fromModel(m)).toList(),
+      encounterAreas: encounterAreas,
+      evolutions: evolutions.map((e) => CachedEvolution.fromModel(e)).toList(),
+      stats: stats,
+      maleRate: maleRate,
+      femaleRate: femaleRate,
+    );
   }
 }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:loggy/loggy.dart';
+import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/core/di/injector.dart';
 import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +56,17 @@ class _HomePageState extends State<HomePage> {
     final viewModel = context.watch<HomeViewModel>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('FarmaDex')),
+      appBar: AppBar(
+        title: const Text('FarmaDex'),
+        leading: ElevatedButton(
+          onPressed: () {
+            final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
+            final cached = box.get('Bulbasaur');
+            logError(cached?.name ?? 'No data in cache');
+          },
+          child: const Text("Check Cache"),
+        ),
+      ),
       body: viewModel.isLoading && viewModel.pokemons.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(

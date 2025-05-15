@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:loggy/loggy.dart';
+import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
 import 'package:pokedex/features/pokemon_detail/data/move_model.dart';
 import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import '../domain/pokemon_detail_repository.dart';
@@ -13,6 +15,20 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
 
   @override
   Future<PokemonDetailModel> getPokemonDetail(String name) async {
+    final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
+    final cached = box.get(name);
+    logInfo('[CACHE] Checking Hive for $name');
+    final allKeys = box.keys;
+    logInfo('[CACHE] All keys in box: $allKeys');
+
+    final cachedCheck = box.get(name);
+    logInfo('[CACHE] Value from Hive: $cachedCheck');
+
+    if (cached != null) {
+      logInfo('Returning $name from Hive cache');
+      return cached.toModel();
+    }
+
     final pokemonRes =
         await client.get(Uri.parse('https://pokeapi.co/api/v2/pokemon/$name'));
     if (pokemonRes.statusCode != 200) {
@@ -44,17 +60,6 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
     final evoData = json.decode(evoRes.body);
     final evolutions = <EvolutionModel>[];
 
-    // stats
-    final statsMap = <String, int>{};
-    for (var stat in data['stats']) {
-      statsMap[stat['stat']['name']] = stat['base_stat'];
-    }
-
-// gender
-    final genderRate = speciesData['gender_rate'];
-    final male = genderRate == -1 ? 0.0 : (8 - genderRate) * 12.5;
-    final female = genderRate == -1 ? 0.0 : genderRate * 12.5;
-
     void traverse(Map<String, dynamic> chain) {
       final species = chain['species'];
       final speciesId = _extractIdFromUrl(species['url']);
@@ -76,7 +81,24 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
     }
 
     traverse(evoData['chain']);
-    logDebug('Evolutions: ${evolutions.map((e) => {e.name,e.number,e.condition,e.gifUrl}).toList()}');
+    logDebug('Evolutions: ${evolutions.map((e) => {
+          e.name,
+          e.number,
+          e.condition,
+          e.gifUrl
+        }).toList()}');
+
+    // stats
+    final statsMap = <String, int>{};
+    for (var stat in data['stats']) {
+      statsMap[stat['stat']['name']] = stat['base_stat'];
+    }
+
+    // gender
+    final genderRate = speciesData['gender_rate'];
+    final male = genderRate == -1 ? 0.0 : (8 - genderRate) * 12.5;
+    final female = genderRate == -1 ? 0.0 : genderRate * 12.5;
+
     // moves with detail
     final moveModels = <MoveModel>[];
     for (final move in data['moves']) {
@@ -100,7 +122,7 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
       ));
     }
 
-    return PokemonDetailModel(
+    final pokeModel = PokemonDetailModel(
       name: data['name'],
       number: '#${data['id'].toString().padLeft(3, '0')}',
       types: List<String>.from(
@@ -121,46 +143,42 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
       evolutions: evolutions,
       stats: statsMap,
       maleRate: male,
-      femaleRate: female
+      femaleRate: female,
     );
+
+    logInfo('[CACHE] Stats: $statsMap');
+
+    await box.put(name, pokeModel.toCache());
+    logInfo('[CACHE] Saved $name to Hive');
+
+    final contains = box.containsKey(name);
+    logInfo('[CACHE] Hive contains $name? $contains');
+    
+
+    return pokeModel;
   }
 }
 
 String _extractIdFromUrl(String url) {
   final segments = url.split('/');
-  return segments[segments.length - 2]; // penúltimo segmento es el ID
+  return segments[segments.length - 2];
 }
 
 String _parseEvolutionCondition(Map<String, dynamic> details) {
   if (details['min_level'] != null) {
     return 'Level ${details['min_level']}';
   }
-
   if (details['trigger']?['name'] == 'use-item') {
     final item = details['item']?['name'];
     return item != null ? 'Use $item' : 'Use item';
   }
-
-  if (details['trigger']?['name'] == 'trade') {
-    return 'Trade';
-  }
-
-  if (details['min_happiness'] != null) {
-    return 'High Friendship';
-  }
-
-  if (details['min_beauty'] != null) {
-    return 'High Beauty';
-  }
-
-  if (details['min_affection'] != null) {
-    return 'High Affection';
-  }
-
+  if (details['trigger']?['name'] == 'trade') return 'Trade';
+  if (details['min_happiness'] != null) return 'High Friendship';
+  if (details['min_beauty'] != null) return 'High Beauty';
+  if (details['min_affection'] != null) return 'High Affection';
   if (details['held_item'] != null) {
     return 'Hold ${details['held_item']['name']}';
   }
-
   if (details['location'] != null) {
     return 'At ${details['location']['name']}';
   }
