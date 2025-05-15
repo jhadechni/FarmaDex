@@ -1,3 +1,6 @@
+import '../data/evolution_model.dart';
+import '../data/move_model.dart';
+
 class PokemonDetailEntity {
   final String name;
   final String number;
@@ -9,8 +12,12 @@ class PokemonDetailEntity {
   final String weight;
   final List<String> abilities;
   final String description;
-  final List<MoveEntity> moves;
+  final List<MoveModel> moves;
   final List<String> encounterAreas;
+  final List<EvolutionModel> evolutions;
+  final Map<String, int> stats; 
+  final double maleRate; 
+  final double femaleRate;
 
   const PokemonDetailEntity({
     required this.name,
@@ -25,23 +32,9 @@ class PokemonDetailEntity {
     required this.description,
     required this.moves,
     required this.encounterAreas,
-  });
-}
-
-class MoveEntity {
-  final String name;
-  final String type;
-  final String category;
-  final int? power;
-  final int? accuracy;
-  final int levelLearnedAt;
-
-  const MoveEntity({
-    required this.name,
-    required this.type,
-    required this.category,
-    this.power,
-    this.accuracy,
-    required this.levelLearnedAt,
+    required this.evolutions,
+    required this.stats,
+    required this.maleRate,
+    required this.femaleRate,
   });
 }

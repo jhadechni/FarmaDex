@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:pokedex/core/utils/color_mapper.dart';
-import 'package:pokedex/core/widgets/pokeball_logo.dart';
-import 'package:pokedex/core/widgets/type_chips.dart';
-import 'package:pokedex/features/pokemon_detail/data/mock.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/about_tab.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/base_stats_tab.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/evolution_tab.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/moves_tab.dart';
+import 'package:pokedex/core/utils/string_utils.dart';
+import 'package:provider/provider.dart';
+import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import 'about_tab.dart';
+import 'base_stats_tab.dart';
+import 'evolution_tab.dart';
+import 'moves_tab.dart';
+import '../../../core/utils/color_mapper.dart';
+import '../../../core/widgets/pokeball_logo.dart';
+import '../../../core/widgets/type_chips.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 
 class PokemonDetailPage extends StatefulWidget {
-  final String pokemonName;
-
-  const PokemonDetailPage({super.key, required this.pokemonName});
+  const PokemonDetailPage({super.key});
 
   @override
   State<PokemonDetailPage> createState() => _PokemonDetailPageState();
@@ -37,14 +37,23 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    final color = MockPokemonDetail.color.toColor();
+    final viewModel = context.watch<PokemonDetailViewModel>();
+    final pokemon = viewModel.pokemonDetail;
+
+    if (viewModel.isLoading || pokemon == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final color = pokemon.color.toColor();
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: color,
       body: Stack(
         children: [
-          // Fondo con imagen y datos básicos
+          // HEADER
           Container(
             height: size.height * 0.3,
             width: double.infinity,
@@ -53,20 +62,19 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nombre y número
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      MockPokemonDetail.name,
-                      style: TextStyle(
+                    Text(
+                      pokemon.name.capitalize(),
+                      style: const TextStyle(
                         fontSize: 26,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      MockPokemonDetail.number,
+                      pokemon.number,
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.white.withOpacity(0.7),
@@ -76,16 +84,14 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
                   ],
                 ),
                 const SizedBox(height: 8),
-                const TypeChipList(
-                    types: MockPokemonDetail.types, isVertical: false),
+                TypeChipList(types: pokemon.types, isVertical: false),
               ],
             ),
           ),
 
-          // Contenedor blanco + imagen del Pokémon (ambos quedarán bajo el panel)
+          // Fondo blanco detrás del panel
           Positioned(
-            top: size.height *
-                0.38, // Ajustado para que aparezca justo antes del panel
+            top: size.height * 0.38,
             left: 0,
             right: 0,
             child: Container(
@@ -99,7 +105,8 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               ),
             ),
           ),
-          // Logo de Pokéball
+
+          // Pokebola
           Positioned(
             top: size.height * 0.24,
             left: size.width * 0.76 - 40,
@@ -108,7 +115,8 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
               color: Colors.white.withOpacity(0.2),
             ),
           ),
-          // Imagen del Pokémon sobre el contenedor blanco
+
+          // Imagen
           Positioned(
             top: size.height * 0.15,
             left: 0,
@@ -116,19 +124,18 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             child: Container(
               alignment: Alignment.center,
               child: Image.network(
-                MockPokemonDetail.imageUrl,
+                pokemon.imageUrl,
                 height: 250,
                 fit: BoxFit.contain,
               ),
             ),
           ),
 
-          // Panel deslizante (aparecerá por encima de todo lo anterior)
+          // Panel
           SlidingUpPanel(
             controller: _panelController,
             maxHeight: size.height * 0.9,
-            minHeight: size.height *
-                0.59, // Ajustado para mostrar solo parte del panel inicialmente
+            minHeight: size.height * 0.59,
             parallaxEnabled: true,
             parallaxOffset: 0.5,
             borderRadius: const BorderRadius.only(
@@ -171,8 +178,8 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
-                      children: const [
-                        AboutTab(),
+                      children: [
+                        AboutTab(pokemon: pokemon,),
                         BaseStatsTab(),
                         EvolutionTab(),
                         MovesTab(),

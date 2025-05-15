@@ -28,9 +28,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => sl<HomeViewModel>()..fetchInitialPokemons(),
       child: const MaterialApp(
-        home: PokemonDetailPage(
-          pokemonName: 'pikachu',
-        ),
+        home: HomePage()
       ),
     );
   }

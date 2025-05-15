@@ -1,69 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:pokedex/core/widgets/stat_bar.dart';
+import 'package:pokedex/features/home/data/pokemon_repository_impl.dart';
+import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import 'package:provider/provider.dart';
 
 class BaseStatsTab extends StatelessWidget {
   const BaseStatsTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(15),
+    final pokemon = context.watch<PokemonDetailViewModel>().pokemonDetail!;
+
+    final stats = pokemon.stats;
+    final total = stats.values.reduce((a, b) => a + b);
+
+    return Padding(
+      padding: const EdgeInsets.all(15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stats
-          StatBar(label: 'HP', value: 140, maxValue: 255),
-          SizedBox(height: 12),
-          StatBar(label: 'Attack', value: 49, maxValue: 255),
-          SizedBox(height: 12),
-          StatBar(label: 'Defense', value: 49, maxValue: 255),
-          SizedBox(height: 12),
-          StatBar(label: 'Sp. Atk', value: 65, maxValue: 255),
-          SizedBox(height: 12),
-          StatBar(label: 'Sp. Def', value: 65, maxValue: 255),
-          SizedBox(height: 12),
-          StatBar(label: 'Speed', value: 45, maxValue: 255),
-          SizedBox(height: 16),
-          StatBar(label: 'Total', value: 170, maxValue: 750),
-
-          SizedBox(height: 32),
-
-          // Type Defenses
-          Text(
-            'Type Defenses',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'The effectiveness of each type on this Pokémon. '
-            'This can change depending on form, abilities, or items.',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
-          ),
-          SizedBox(height: 10),
-          Text(
+          StatBar(label: 'HP', value: stats['hp'] ?? 0, maxValue: 255),
+          const SizedBox(height: 12),
+          StatBar(label: 'Attack', value: stats['attack'] ?? 0, maxValue: 255),
+          const SizedBox(height: 12),
+          StatBar(label: 'Defense', value: stats['defense'] ?? 0, maxValue: 255),
+          const SizedBox(height: 12),
+          StatBar(label: 'Sp. Atk', value: stats['special-attack'] ?? 0, maxValue: 255),
+          const SizedBox(height: 12),
+          StatBar(label: 'Sp. Def', value: stats['special-defense'] ?? 0, maxValue: 255),
+          const SizedBox(height: 12),
+          StatBar(label: 'Speed', value: stats['speed'] ?? 0, maxValue: 255),
+          const SizedBox(height: 16),
+          StatBar(label: 'Total', value: total, maxValue: 750),
+          const SizedBox(height: 32),
+          const Text(
             'Encounter Locations',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 15),
-          StatBar(label: 'Virdian Forest', value: 100, maxValue: 100,
-              hasPercentage: true),
-          SizedBox(height: 10),
-          StatBar(label: 'Virdian Forest', value: 10, maxValue: 100,hasPercentage: true),
-          SizedBox(height: 10),
-          StatBar(label: 'Virdian Forest', value: 3, maxValue: 100,hasPercentage: true),
-          SizedBox(height: 10),
-          StatBar(label: 'Virdian Forest', value: 40, maxValue: 100,hasPercentage: true),
-          SizedBox(height: 10),
-          StatBar(label: 'Virdian Forest', value: 22, maxValue: 100,hasPercentage: true),
+          const SizedBox(height: 12),
+          const Text(
+            'The locations where this Pokémon can be found in the wild.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+            ),
+          ),
+          if (pokemon.encounterAreas.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Text(
+                'No encounter locations found.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
+                ),
+              ),
+            )
+          else
+            const SizedBox(height: 12),
+          for (final area in pokemon.encounterAreas)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: StatBar(
+                label: area.capitalize(),
+                value: 100, // Puedes ajustar a valor real si lo tienes
+                maxValue: 100,
+                hasPercentage: true,
+              ),
+            ),
         ],
       ),
     );

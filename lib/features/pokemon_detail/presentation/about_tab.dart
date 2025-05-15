@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:pokedex/features/pokemon_detail/data/mock.dart';
-
-import '../../../core/widgets/gender_bar.dart';
+import 'package:pokedex/core/utils/string_utils.dart';
+import 'package:pokedex/core/widgets/gender_bar.dart';
+import 'package:pokedex/features/pokemon_detail/domain/pokemon_detail_entity.dart';
 
 class AboutTab extends StatelessWidget {
-  const AboutTab({super.key});
+  final PokemonDetailEntity pokemon;
+
+  const AboutTab({super.key, required this.pokemon});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +24,7 @@ class AboutTab extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            MockPokemonDetail.description,
+            pokemon.description,
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 24),
@@ -33,34 +35,36 @@ class AboutTab extends StatelessWidget {
               InfoGridElement(
                 icon: Icons.scale,
                 label: 'Weight',
-                value: MockPokemonDetail.weight,
+                value: pokemon.weight,
                 width: itemWidth,
               ),
               InfoGridElement(
                 icon: Icons.height,
                 label: 'Height',
-                value: MockPokemonDetail.height,
+                value: pokemon.height,
                 width: itemWidth,
               ),
               InfoGridElement(
                 icon: Icons.bubble_chart,
-                label: 'Experience',
-                value: MockPokemonDetail.baseExperience,
+                label: 'Abilities',
+                value: pokemon.abilities.isNotEmpty
+                    ? pokemon.abilities.first.capitalize()
+                    : 'Unknown',
                 width: itemWidth,
               ),
               InfoGridElement(
-                icon: Icons.handshake,
-                label: 'Ability',
-                value: MockPokemonDetail.abilities[0],
+                icon: Icons.pets,
+                label: 'Species',
+                value: pokemon.specie,
                 width: itemWidth,
               ),
             ],
           ),
           const SizedBox(height: 20),
-          GenderRatioBar(
-            malePercentage: 12.5,
-            femalePercentage: 82.5,
-          )
+           GenderRatioBar(
+            malePercentage: pokemon.maleRate,
+            femalePercentage: pokemon.femaleRate,
+          ),
         ],
       ),
     );

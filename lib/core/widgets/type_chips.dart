@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/core/utils/string_utils.dart';
+import 'package:pokedex/features/home/data/pokemon_repository_impl.dart';
 
 class TypeChipList extends StatelessWidget {
   final List<String> types;
@@ -35,7 +37,7 @@ class TypeChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        label,
+        label.capitalize(),
         style: const TextStyle(
           color: Colors.white,
           fontSize: 12,

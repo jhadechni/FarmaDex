@@ -48,7 +48,7 @@ class EvolutionItem extends StatelessWidget {
           ),
         ),
         Text(
-          '#$number',
+          number,
           style: const TextStyle(
             color: Colors.grey,
             fontSize: 14,

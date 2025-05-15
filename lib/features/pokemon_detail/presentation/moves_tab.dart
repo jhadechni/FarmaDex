@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:pokedex/core/utils/color_mapper.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_page.dart';
-import '../data/mock.dart';
+import 'package:pokedex/core/utils/string_utils.dart';
+import 'package:pokedex/features/home/data/pokemon_repository_impl.dart';
+import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
+import 'package:provider/provider.dart';
 
 class MovesTab extends StatelessWidget {
   const MovesTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final moves = MockPokemonDetail.mockMoves;
+    final moves = context.watch<PokemonDetailViewModel>().pokemonDetail?.moves ?? [];
 
     return ListView.separated(
       padding: const EdgeInsets.all(16),
@@ -39,7 +41,7 @@ class MovesTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      move.name,
+                      move.name.capitalize(),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
