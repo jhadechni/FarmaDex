@@ -228,10 +228,13 @@ class _PokemonDetailPageState extends State<PokemonDetailPage>
             right: 0,
             child: Container(
               alignment: Alignment.center,
-              child: Image.network(
-                pokemon.imageUrl,
-                height: 250,
-                fit: BoxFit.contain,
+              child: Hero(
+                tag: 'pokemon-image-${pokemon.name.capitalize()}',
+                child: Image.network(
+                  pokemon.imageUrl,
+                  height: 250,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
           ),

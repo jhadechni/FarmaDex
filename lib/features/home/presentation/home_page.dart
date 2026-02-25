@@ -134,6 +134,7 @@ class _HomePageState extends State<HomePage> {
                           types: pokemon.types,
                           imagePath: pokemon.imageUrl,
                           color: pokemon.color,
+                          animationIndex: index % 10,
                         );
                       },
                     );

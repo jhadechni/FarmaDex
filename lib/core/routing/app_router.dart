@@ -11,6 +11,57 @@ import '../../features/pokemon_registration/presentation/my_pokemon_page.dart';
 import '../../features/pokemon_registration/presentation/pokemon_registration_page.dart';
 import '../di/injector.dart';
 
+/// Custom page transition that fades and slides up.
+CustomTransitionPage<void> _buildFadeSlideTransition({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return FadeTransition(
+        opacity: curvedAnimation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.05),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
+          child: child,
+        ),
+      );
+    },
+  );
+}
+
+/// Custom page transition that fades only.
+CustomTransitionPage<void> _buildFadeTransition({
+  required BuildContext context,
+  required GoRouterState state,
+  required Widget child,
+}) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      return FadeTransition(
+        opacity: CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOut,
+        ),
+        child: child,
+      );
+    },
+  );
+}
+
 /// Application route paths.
 abstract class AppRoutes {
   static const home = '/';
@@ -33,38 +84,62 @@ GoRouter createRouter() {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (context, state) => const HomePage(),
+        pageBuilder: (context, state) => _buildFadeTransition(
+          context: context,
+          state: state,
+          child: const HomePage(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.pokemonDetail,
         name: 'pokemon-detail',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final pokemonName = state.pathParameters['name']!;
-          return ChangeNotifierProvider(
-            create: (_) => sl<PokemonDetailViewModel>()..fetchDetail(pokemonName),
-            child: const PokemonDetailPage(),
+          return _buildFadeSlideTransition(
+            context: context,
+            state: state,
+            child: ChangeNotifierProvider(
+              create: (_) => sl<PokemonDetailViewModel>()..fetchDetail(pokemonName),
+              child: const PokemonDetailPage(),
+            ),
           );
         },
       ),
       GoRoute(
         path: AppRoutes.favorites,
         name: 'favorites',
-        builder: (context, state) => const FavoritesPage(),
+        pageBuilder: (context, state) => _buildFadeTransition(
+          context: context,
+          state: state,
+          child: const FavoritesPage(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.createPokemon,
         name: 'create-pokemon',
-        builder: (context, state) => const PokemonRegisterPage(),
+        pageBuilder: (context, state) => _buildFadeTransition(
+          context: context,
+          state: state,
+          child: const PokemonRegisterPage(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.myPokemons,
         name: 'my-pokemons',
-        builder: (context, state) => const MyPokemonsPage(),
+        pageBuilder: (context, state) => _buildFadeTransition(
+          context: context,
+          state: state,
+          child: const MyPokemonsPage(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.compass,
         name: 'compass',
-        builder: (context, state) => const CompassPage(),
+        pageBuilder: (context, state) => _buildFadeTransition(
+          context: context,
+          state: state,
+          child: const CompassPage(),
+        ),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

@@ -34,27 +34,41 @@ class FavoritesPage extends StatelessWidget {
                           itemCount: favorites.length,
                           itemBuilder: (_, index) {
                             final pokemon = favorites[index];
-                            return Dismissible(
-                              key: ValueKey(pokemon.name),
-                              direction: DismissDirection.endToStart,
-                              onDismissed: (_) =>
-                                  viewModel.toggle(pokemon.name),
-                              background: Container(
-                                padding: const EdgeInsets.only(right: 20),
-                                alignment: Alignment.centerRight,
-                                decoration: BoxDecoration(
-                                  color: Colors.red.shade100,
-                                  borderRadius: BorderRadius.circular(20),
+                            return TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: Duration(milliseconds: 300 + (index * 80)),
+                              curve: Curves.easeOutCubic,
+                              builder: (context, value, child) {
+                                return Opacity(
+                                  opacity: value,
+                                  child: Transform.translate(
+                                    offset: Offset(30 * (1 - value), 0),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: Dismissible(
+                                key: ValueKey(pokemon.name),
+                                direction: DismissDirection.endToStart,
+                                onDismissed: (_) =>
+                                    viewModel.toggle(pokemon.name),
+                                background: Container(
+                                  padding: const EdgeInsets.only(right: 20),
+                                  alignment: Alignment.centerRight,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.shade100,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(Icons.delete_outline,
+                                      color: Colors.red),
                                 ),
-                                child: const Icon(Icons.delete_outline,
-                                    color: Colors.red),
-                              ),
-                              child: FavoritePokemonCard(
-                                pokemon: pokemon,
-                                onTap: () {
-                                  context.push(AppRoutes.pokemonDetailPath(pokemon.name));
-                                },
-                                onDelete: () => viewModel.toggle(pokemon.name),
+                                child: FavoritePokemonCard(
+                                  pokemon: pokemon,
+                                  onTap: () {
+                                    context.push(AppRoutes.pokemonDetailPath(pokemon.name));
+                                  },
+                                  onDelete: () => viewModel.toggle(pokemon.name),
+                                ),
                               ),
                             );
                           },
