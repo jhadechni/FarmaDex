@@ -105,7 +105,7 @@ class _MiniPokemonCardState extends State<MiniPokemonCard>
                     right: -10,
                     child: PokeballLogo(
                       size: 100,
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                     ),
                   ),
 
@@ -141,7 +141,7 @@ class _MiniPokemonCardState extends State<MiniPokemonCard>
                           child: Text(
                             widget.pokemonNumber,
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               fontWeight: FontWeight.bold,
                             ),
                           ),

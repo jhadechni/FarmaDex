@@ -75,12 +75,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: viewModel.isLoading && viewModel.pokemons.isEmpty
-          ? Padding(
-            padding: const EdgeInsets.all(14),
-            child: _buildSkeletonGrid(screenWidth),
-          )
-          : ListView(
+      body: viewModel.errorMessage != null && viewModel.pokemons.isEmpty
+          ? _buildErrorState(viewModel)
+          : viewModel.isLoading && viewModel.pokemons.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: _buildSkeletonGrid(screenWidth),
+                )
+              : ListView(
               controller: _scrollController,
               padding: const EdgeInsets.all(14),
               children: [
@@ -192,6 +194,52 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildErrorState(HomeViewModel viewModel) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.redAccent,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Failed to load Pokémon',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              viewModel.errorMessage ?? 'Unknown error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => viewModel.fetchInitialPokemons(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSkeletonGrid(double screenWidth) {
     int crossAxisCount = (screenWidth / 156).floor().clamp(1, 4);
     const double itemHeight = 156;
@@ -240,7 +288,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

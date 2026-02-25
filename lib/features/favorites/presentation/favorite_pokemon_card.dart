@@ -35,7 +35,7 @@ class FavoritePokemonCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: pokemon.color.toColor().withOpacity(0.8),
+            color: pokemon.color.toColor().withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Row(
