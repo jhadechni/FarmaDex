@@ -1,7 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:loggy/loggy.dart';
+import 'package:pokedex/core/utils/result.dart';
 import '../domain/pokemon_entity.dart';
 import '../domain/pokemon_repository.dart';
 
@@ -18,25 +17,23 @@ class HomeViewModel extends ChangeNotifier {
   bool allLoaded = false;
   final int limit = 10;
   PokemonEntity? searchResult;
-
+  String? errorMessage;
 
   HomeViewModel(this.repository);
 
   List<PokemonEntity> get filteredPokemons {
-  if (_searchQuery.isEmpty) return pokemons;
+    if (_searchQuery.isEmpty) return pokemons;
 
-  final filtered = pokemons
-      .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-      .toList();
+    final filtered = pokemons
+        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
 
-  // No mezcles con pokemons cargados si hay uno específicamente buscado
-  if (filtered.isEmpty && searchResult != null) {
-    return [searchResult!];
+    if (filtered.isEmpty && searchResult != null) {
+      return [searchResult!];
+    }
+
+    return filtered;
   }
-
-  return filtered;
-}
-
 
   void updateSearchQuery(String query) {
     _searchQuery = query;
@@ -50,27 +47,34 @@ class HomeViewModel extends ChangeNotifier {
     if (_searchQuery.isNotEmpty &&
         match.isNotEmpty &&
         !pokemons.any((p) => p.name.toLowerCase() == match.toLowerCase())) {
-      // Defer fetch until after build
       Future.microtask(() => fetchDetailAndAdd(match));
     }
   }
 
   Future<void> fetchInitialPokemons() async {
     isLoading = true;
+    errorMessage = null;
     notifyListeners();
 
-    try {
-      offset = 0;
-      allLoaded = false;
-      pokemons = await repository.getPokemons(offset: offset, limit: limit);
-      offset += limit;
-      logInfo('Loaded ${pokemons.length} pokemons');
-    } catch (e) {
-      logError('Initial fetch error: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    offset = 0;
+    allLoaded = false;
+
+    final result = await repository.getPokemons(offset: offset, limit: limit);
+
+    result.when(
+      success: (data) {
+        pokemons = data;
+        offset += limit;
+        logInfo('Loaded ${pokemons.length} pokemons');
+      },
+      failure: (error) {
+        errorMessage = error.message;
+        logError('Initial fetch error: $error');
+      },
+    );
+
+    isLoading = false;
+    notifyListeners();
   }
 
   Future<void> fetchMorePokemons() async {
@@ -79,51 +83,59 @@ class HomeViewModel extends ChangeNotifier {
     isLoadingMore = true;
     notifyListeners();
 
-    try {
-      final newPokemons = await repository.getPokemons(offset: offset, limit: limit);
-      if (newPokemons.isEmpty) {
-        allLoaded = true;
-        logInfo('All pokemons loaded');
-      } else {
-        pokemons.addAll(newPokemons);
-        offset += limit;
-        logInfo('Fetched more. Total: ${pokemons.length}');
-      }
-    } catch (e) {
-      logError('Fetch more error: $e');
-    } finally {
-      isLoadingMore = false;
-      notifyListeners();
-    }
+    final result = await repository.getPokemons(offset: offset, limit: limit);
+
+    result.when(
+      success: (newPokemons) {
+        if (newPokemons.isEmpty) {
+          allLoaded = true;
+          logInfo('All pokemons loaded');
+        } else {
+          pokemons.addAll(newPokemons);
+          offset += limit;
+          logInfo('Fetched more. Total: ${pokemons.length}');
+        }
+      },
+      failure: (error) {
+        logError('Fetch more error: $error');
+      },
+    );
+
+    isLoadingMore = false;
+    notifyListeners();
   }
 
   Future<void> fetchAllPokemonNames() async {
-    try {
-      final res = await http.get(Uri.parse('https://pokeapi.co/api/v2/pokemon?limit=10000'));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        allPokemonNames = List<String>.from(data['results'].map((e) => e['name']));
+    final result = await repository.getAllPokemonNames();
+
+    result.when(
+      success: (names) {
+        allPokemonNames = names;
         logInfo('Fetched ${allPokemonNames.length} pokemon names');
-      }
-    } catch (e) {
-      logError('Failed to fetch all names: $e');
-    }
+      },
+      failure: (error) {
+        logError('Failed to fetch all names: $error');
+      },
+    );
   }
 
   Future<void> fetchDetailAndAdd(String name) async {
-  isFetchingSearch = true;
-  notifyListeners();
+    isFetchingSearch = true;
+    notifyListeners();
 
-  try {
-    final detail = await repository.getPokemonDetail(name);
-    searchResult = detail;
-    logInfo('Fetched detail for $name');
-  } catch (e) {
-    logError('Error fetching detail for $name: $e');
-  } finally {
+    final result = await repository.getPokemonDetail(name);
+
+    result.when(
+      success: (detail) {
+        searchResult = detail;
+        logInfo('Fetched detail for $name');
+      },
+      failure: (error) {
+        logError('Error fetching detail for $name: $error');
+      },
+    );
+
     isFetchingSearch = false;
     notifyListeners();
   }
-}
-
 }

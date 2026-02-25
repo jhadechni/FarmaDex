@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import '../../../core/cache/adapters/registered_pokemon.dart';
 import '../../../core/widgets/pokeball_logo.dart';
@@ -71,7 +72,7 @@ class _PokemonRegisterPageState extends State<PokemonRegisterPage> {
         const SnackBar(content: Text('Pokémon registered successfully!')),
       );
 
-      Navigator.pop(context); // Regresar al Home
+      context.pop(); // Return to Home
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

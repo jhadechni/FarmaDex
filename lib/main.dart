@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/cache/adapters/cached_move.dart';
@@ -8,12 +9,19 @@ import 'package:provider/provider.dart';
 import 'core/cache/adapters/cached_evolution.dart';
 import 'core/cache/adapters/registered_pokemon.dart';
 import 'core/di/injector.dart';
+import 'core/routing/app_router.dart';
 import 'features/favorites/presentation/favorites_view_model.dart';
-import 'features/home/presentation/home_page.dart';
 import 'features/home/presentation/home_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Lock orientation to portrait only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
   init();
 
   await Hive.initFlutter();
@@ -41,14 +49,16 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final router = createRouter();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
             create: (_) => sl<HomeViewModel>()..fetchInitialPokemons()),
         ChangeNotifierProvider(create: (_) => sl<FavoritesViewModel>()),
       ],
-      child: MaterialApp(
-        home: const HomePage(),
+      child: MaterialApp.router(
+        routerConfig: router,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
             primaryColor: Colors.indigo,
