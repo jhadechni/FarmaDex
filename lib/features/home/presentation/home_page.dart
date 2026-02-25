@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:loggy/loggy.dart';
 import 'package:lottie/lottie.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:pokedex/core/di/injector.dart';
-import 'package:pokedex/features/compass/presentation/compass_page.dart';
-import 'package:pokedex/features/favorites/presentation/favorites_page.dart';
-import 'package:pokedex/features/pokemon_detail/presentation/pokemon_detail_view_model.dart';
-import 'package:pokedex/features/pokemon_registration/presentation/my_pokemon_page.dart';
-import 'package:pokedex/features/pokemon_registration/presentation/pokemon_registration_page.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
+import '../../../core/routing/app_router.dart';
 import '../../../core/widgets/pokemon_mini_card.dart';
-import '../../pokemon_detail/presentation/pokemon_detail_page.dart';
 import 'home_view_model.dart';
 
 const Color primaryAccent = Color(0xFF6B79DB);
@@ -80,12 +75,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ),
       ),
-      body: viewModel.isLoading && viewModel.pokemons.isEmpty
-          ? Padding(
-            padding: const EdgeInsets.all(14),
-            child: _buildSkeletonGrid(screenWidth),
-          )
-          : ListView(
+      body: viewModel.errorMessage != null && viewModel.pokemons.isEmpty
+          ? _buildErrorState(viewModel)
+          : viewModel.isLoading && viewModel.pokemons.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: _buildSkeletonGrid(screenWidth),
+                )
+              : ListView(
               controller: _scrollController,
               padding: const EdgeInsets.all(14),
               children: [
@@ -131,16 +128,7 @@ class _HomePageState extends State<HomePage> {
                         final pokemon = viewModel.filteredPokemons[index];
                         return MiniPokemonCard(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ChangeNotifierProvider(
-                                  create: (_) => sl<PokemonDetailViewModel>()
-                                    ..fetchDetail(pokemon.name),
-                                  child: const PokemonDetailPage(),
-                                ),
-                              ),
-                            );
+                            context.push(AppRoutes.pokemonDetailPath(pokemon.name));
                             logInfo('Navigating to detail page for ${pokemon.name}');
                           },
                           pokemonName: pokemon.name,
@@ -148,6 +136,7 @@ class _HomePageState extends State<HomePage> {
                           types: pokemon.types,
                           imagePath: pokemon.imageUrl,
                           color: pokemon.color,
+                          animationIndex: index % 10,
                         );
                       },
                     );
@@ -188,31 +177,65 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildLabelWidgetButton(
               'Favorite Pokemons', FontAwesomeIcons.solidHeart, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const FavoritesPage()),
-            );
+            context.push(AppRoutes.favorites);
           }, maxWidth),
           _buildLabelWidgetButton('Create a pokémon', FontAwesomeIcons.kiwiBird,
               () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PokemonRegisterPage()),
-            );
+            context.push(AppRoutes.createPokemon);
           }, maxWidth),
           _buildLabelWidgetButton('My Pokémons', FontAwesomeIcons.medal, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MyPokemonsPage()),
-            );
+            context.push(AppRoutes.myPokemons);
           }, maxWidth),
           _buildLabelWidgetButton('Compass', FontAwesomeIcons.compass, () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CompassPage()),
-            );
+            context.push(AppRoutes.compass);
           }, maxWidth),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(HomeViewModel viewModel) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 64,
+              color: Colors.redAccent,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Failed to load Pokémon',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              viewModel.errorMessage ?? 'Unknown error',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () => viewModel.fetchInitialPokemons(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -265,7 +288,7 @@ class _HomePageState extends State<HomePage> {
           borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),

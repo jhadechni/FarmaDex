@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pokedex/core/utils/result.dart';
 
 import '../domain/pokemon_detail_entity.dart';
 import '../domain/pokemon_detail_repository.dart';
@@ -18,14 +19,18 @@ class PokemonDetailViewModel extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    try {
-      final result = await repository.getPokemonDetail(name);
-      pokemonDetail = result;
-    } catch (e) {
-      errorMessage = 'Failed to load details: $e';
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
+    final result = await repository.getPokemonDetail(name);
+
+    result.when(
+      success: (data) {
+        pokemonDetail = data;
+      },
+      failure: (error) {
+        errorMessage = error.message;
+      },
+    );
+
+    isLoading = false;
+    notifyListeners();
   }
 }

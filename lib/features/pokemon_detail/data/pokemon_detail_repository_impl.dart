@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:loggy/loggy.dart';
 import 'package:pokedex/core/cache/adapters/cached_pokemon_detail.dart';
+import 'package:pokedex/core/utils/result.dart';
 import 'package:pokedex/features/pokemon_detail/data/move_model.dart';
 import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
 import '../domain/pokemon_detail_repository.dart';
@@ -14,132 +16,157 @@ class PokemonDetailRepositoryImpl implements PokemonDetailRepository {
   PokemonDetailRepositoryImpl(this.client);
 
   @override
-  Future<PokemonDetailModel> getPokemonDetail(String name) async {
-    final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
-    final key = _normalizeKey(name);
+  Future<Result<PokemonDetailModel>> getPokemonDetail(String name) async {
+    try {
+      final box = Hive.box<CachedPokemonDetail>('pokemon_detail_cache');
+      final key = _normalizeKey(name);
 
-    logInfo('[CACHE] Checking Hive for $key');
-    final cached = box.get(key);
+      logInfo('[CACHE] Checking Hive for $key');
+      final cached = box.get(key);
 
-    if (cached != null) {
-      logInfo('✅ Returning $key from Hive cache');
-      return cached.toModel();
-    }
-
-    final pokemonRes =
-        await client.get(Uri.parse('https://pokeapi.co/api/v2/pokemon/$name'));
-    if (pokemonRes.statusCode != 200) {
-      throw Exception('Failed to fetch pokemon detail');
-    }
-    final data = json.decode(pokemonRes.body);
-
-    final speciesRes = await client.get(Uri.parse(data['species']['url']));
-    final speciesData = json.decode(speciesRes.body);
-
-    final flavor = (speciesData['flavor_text_entries'] as List).firstWhere(
-      (entry) => entry['language']['name'] == 'en',
-      orElse: () => {'flavor_text': ''},
-    );
-
-    final encountersRes =
-        await client.get(Uri.parse(data['location_area_encounters']));
-    final encounterData = json.decode(encountersRes.body);
-    final areas = (encounterData as List)
-        .map((e) => e['location_area']['name'].toString().replaceAll('-', ' '))
-        .toList();
-
-    final evolutionChainUrl = speciesData['evolution_chain']['url'];
-    final evoRes = await client.get(Uri.parse(evolutionChainUrl));
-    final evoData = json.decode(evoRes.body);
-    final evolutions = <EvolutionModel>[];
-
-    void traverse(Map<String, dynamic> chain) {
-      final species = chain['species'];
-      final speciesId = _extractIdFromUrl(species['url']);
-
-      evolutions.add(EvolutionModel(
-        name: species['name'],
-        number: '#${speciesId.padLeft(3, '0')}',
-        gifUrl:
-            'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/$speciesId.gif',
-        condition: chain['evolution_details'] != null &&
-                chain['evolution_details'].isNotEmpty
-            ? _parseEvolutionCondition(chain['evolution_details'][0])
-            : 'Base',
-      ));
-
-      if (chain['evolves_to'] != null && chain['evolves_to'].isNotEmpty) {
-        traverse(chain['evolves_to'][0]);
+      if (cached != null) {
+        logInfo('[CACHE] Returning $key from Hive cache');
+        return Success(cached.toModel());
       }
-    }
 
-    traverse(evoData['chain']);
-    logDebug('Evolutions: ${evolutions.map((e) => {
-          e.name,
-          e.number,
-          e.condition,
-          e.gifUrl
-        }).toList()}');
+      final pokemonRes =
+          await client.get(Uri.parse('https://pokeapi.co/api/v2/pokemon/$name'));
 
-    final statsMap = <String, int>{};
-    for (var stat in data['stats']) {
-      statsMap[stat['stat']['name']] = stat['base_stat'];
-    }
+      if (pokemonRes.statusCode == 404) {
+        return Failure(NotFoundException('Pokemon "$name" not found'));
+      }
 
-    final genderRate = speciesData['gender_rate'];
-    final male = genderRate == -1 ? 0.0 : (8 - genderRate) * 12.5;
-    final female = genderRate == -1 ? 0.0 : genderRate * 12.5;
+      if (pokemonRes.statusCode != 200) {
+        return Failure(ServerException(
+          'Failed to fetch pokemon detail',
+          statusCode: pokemonRes.statusCode,
+        ));
+      }
 
-    final moveModels = <MoveModel>[];
-    for (final move in data['moves']) {
-      final versionDetails = move['version_group_details'] as List;
-      final learned = versionDetails.firstWhere(
-        (v) => v['move_learn_method']['name'] == 'level-up',
-        orElse: () => null,
+      final data = json.decode(pokemonRes.body);
+
+      final speciesRes = await client.get(Uri.parse(data['species']['url']));
+      if (speciesRes.statusCode != 200) {
+        return Failure(ServerException(
+          'Failed to fetch species data',
+          statusCode: speciesRes.statusCode,
+        ));
+      }
+      final speciesData = json.decode(speciesRes.body);
+
+      final flavor = (speciesData['flavor_text_entries'] as List).firstWhere(
+        (entry) => entry['language']['name'] == 'en',
+        orElse: () => {'flavor_text': ''},
       );
-      if (learned == null) continue;
 
-      final moveDetailRes = await client.get(Uri.parse(move['move']['url']));
-      final moveDetail = json.decode(moveDetailRes.body);
+      final encountersRes =
+          await client.get(Uri.parse(data['location_area_encounters']));
+      final encounterData = json.decode(encountersRes.body);
+      final areas = (encounterData as List)
+          .map((e) => e['location_area']['name'].toString().replaceAll('-', ' '))
+          .toList();
 
-      moveModels.add(MoveModel(
-        name: move['move']['name'],
-        type: moveDetail['type']['name'],
-        category: moveDetail['damage_class']['name'],
-        power: moveDetail['power'],
-        accuracy: moveDetail['accuracy'],
-        levelLearnedAt: learned['level_learned_at'],
-      ));
+      final evolutionChainUrl = speciesData['evolution_chain']['url'];
+      final evoRes = await client.get(Uri.parse(evolutionChainUrl));
+      final evoData = json.decode(evoRes.body);
+      final evolutions = <EvolutionModel>[];
+
+      void traverse(Map<String, dynamic> chain) {
+        final species = chain['species'];
+        final speciesId = _extractIdFromUrl(species['url']);
+
+        evolutions.add(EvolutionModel(
+          name: species['name'],
+          number: '#${speciesId.padLeft(3, '0')}',
+          gifUrl:
+              'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/$speciesId.gif',
+          condition: chain['evolution_details'] != null &&
+                  chain['evolution_details'].isNotEmpty
+              ? _parseEvolutionCondition(chain['evolution_details'][0])
+              : 'Base',
+        ));
+
+        if (chain['evolves_to'] != null && chain['evolves_to'].isNotEmpty) {
+          traverse(chain['evolves_to'][0]);
+        }
+      }
+
+      traverse(evoData['chain']);
+      logDebug('Evolutions: ${evolutions.map((e) => {
+            e.name,
+            e.number,
+            e.condition,
+            e.gifUrl
+          }).toList()}');
+
+      final statsMap = <String, int>{};
+      for (var stat in data['stats']) {
+        statsMap[stat['stat']['name']] = stat['base_stat'];
+      }
+
+      final genderRate = speciesData['gender_rate'];
+      final male = genderRate == -1 ? 0.0 : (8 - genderRate) * 12.5;
+      final female = genderRate == -1 ? 0.0 : genderRate * 12.5;
+
+      final moveModels = <MoveModel>[];
+      for (final move in data['moves']) {
+        final versionDetails = move['version_group_details'] as List;
+        final learned = versionDetails.firstWhere(
+          (v) => v['move_learn_method']['name'] == 'level-up',
+          orElse: () => null,
+        );
+        if (learned == null) continue;
+
+        final moveDetailRes = await client.get(Uri.parse(move['move']['url']));
+        final moveDetail = json.decode(moveDetailRes.body);
+
+        moveModels.add(MoveModel(
+          name: move['move']['name'],
+          type: moveDetail['type']['name'],
+          category: moveDetail['damage_class']['name'],
+          power: moveDetail['power'],
+          accuracy: moveDetail['accuracy'],
+          levelLearnedAt: learned['level_learned_at'],
+        ));
+      }
+
+      final pokeModel = PokemonDetailModel(
+        name: data['name'],
+        number: '#${data['id'].toString().padLeft(3, '0')}',
+        types: List<String>.from(
+            (data['types'] ?? []).map((t) => t['type']['name'])),
+        color: speciesData['color']['name'],
+        specie: speciesData['genera'].firstWhere(
+                (g) => g['language']['name'] == 'en',
+                orElse: () => {'genus': 'Unknown'})['genus'] ??
+            'Unknown',
+        imageUrl: data['sprites']['other']['official-artwork']['front_default'],
+        height: '${(data['height'] / 10).toStringAsFixed(2)} m',
+        weight: '${(data['weight'] / 10).toStringAsFixed(2)} kg',
+        abilities: List<String>.from(
+            (data['abilities'] ?? []).map((a) => a['ability']['name'])),
+        description: flavor['flavor_text'].toString().replaceAll('\n', ' '),
+        moves: moveModels,
+        encounterAreas: areas,
+        evolutions: evolutions,
+        stats: statsMap,
+        maleRate: male,
+        femaleRate: female,
+      );
+
+      await box.put(key, pokeModel.toCache());
+      logInfo('[CACHE] Saved $key to Hive');
+
+      return Success(pokeModel);
+    } on SocketException catch (e) {
+      return Failure(NetworkException('No internet connection', e));
+    } on http.ClientException catch (e) {
+      return Failure(NetworkException('Network error', e));
+    } on HiveError catch (e) {
+      return Failure(CacheException('Cache error', e));
+    } catch (e) {
+      return Failure(UnknownException('Unexpected error', e));
     }
-
-    final pokeModel = PokemonDetailModel(
-      name: data['name'],
-      number: '#${data['id'].toString().padLeft(3, '0')}',
-      types: List<String>.from(
-          (data['types'] ?? []).map((t) => t['type']['name'])),
-      color: speciesData['color']['name'],
-      specie: speciesData['genera'].firstWhere(
-              (g) => g['language']['name'] == 'en',
-              orElse: () => {'genus': 'Unknown'})['genus'] ??
-          'Unknown',
-      imageUrl: data['sprites']['other']['official-artwork']['front_default'],
-      height: '${(data['height'] / 10).toStringAsFixed(2)} m',
-      weight: '${(data['weight'] / 10).toStringAsFixed(2)} kg',
-      abilities: List<String>.from(
-          (data['abilities'] ?? []).map((a) => a['ability']['name'])),
-      description: flavor['flavor_text'].toString().replaceAll('\n', ' '),
-      moves: moveModels,
-      encounterAreas: areas,
-      evolutions: evolutions,
-      stats: statsMap,
-      maleRate: male,
-      femaleRate: female,
-    );
-
-    await box.put(key, pokeModel.toCache());
-    logInfo('[CACHE] Saved $key to Hive');
-
-    return pokeModel;
   }
 
   String _normalizeKey(String name) =>
