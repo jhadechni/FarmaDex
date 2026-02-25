@@ -43,7 +43,7 @@ class MyPokemonsPage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   alignment: Alignment.centerRight,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.9),
+                    color: Colors.red.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Icon(Icons.delete, color: Colors.white),

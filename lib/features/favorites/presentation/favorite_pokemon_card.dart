@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:pokedex/core/utils/string_utils.dart';
 import 'package:pokedex/core/utils/color_mapper.dart';
-import 'package:pokedex/features/pokemon_detail/data/pokemon_detail_model.dart';
+import 'package:pokedex/features/pokemon_detail/domain/pokemon_detail_entity.dart';
 import 'package:pokedex/core/widgets/type_chips.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class FavoritePokemonCard extends StatelessWidget {
-  final PokemonDetailModel pokemon;
+  final PokemonDetailEntity pokemon;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -35,7 +35,7 @@ class FavoritePokemonCard extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: pokemon.color.toColor().withOpacity(0.8),
+            color: pokemon.color.toColor().withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(24),
           ),
           child: Row(
